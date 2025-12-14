@@ -1,20 +1,12 @@
-function difference_of_guassian(hObject,eventdata, handles){
+function outputImg = dog_filter(inputImg)
+    sigma1 = 2.0;
+    sigma2 = 1.0;
 
-      [fileName, path] = uigetfile({ '*jpg;*png;*jpeg;*gif;' }, 'select an image')
-      if fileName ~=0
-            img = imread(fullfile(path, fileName));
-      else 
-            disp('User Cancelled');
-       
-      grayed = rgb2gray(img);
 
-      sigma1 = 1;
-      sigma2 = 3;
-      kernalSize = [5,5];
+    g1 = imgaussfilt(inputImg, sigma1);
+    g2 = imgaussfilt(inputImg, sigma2);
+    diffImg = double(g1) - double(g2);
 
-      gaussian1 = fspechial('Gaussian', kernalSize, sigma1);
-      gaussian2 = fspechial('Gaussian', kernalSize, sigma2);
-
-      dog_kernal = gaussian1 - gaussian2;
-      dogFilteredImage = conv2(double(grayed), dogKernel, 'same');
-}
+    outputImg = mat2gray(diffImg);
+    
+end
