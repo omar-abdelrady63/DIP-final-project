@@ -2,7 +2,9 @@ function noisyImg = add_gaussian_noise(inputImg)
     if size(inputImg, 3) == 3
         inputImg = rgb2gray(inputImg);
     end
-
+    
+ inputImg = im2double(inputImg);
+ 
     mean_val = 0;    
     variance = 0.03;  
 

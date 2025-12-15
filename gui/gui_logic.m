@@ -4,59 +4,75 @@ classdef gui_logic
         function setupPaths()
             currentPath = fileparts(mfilename('fullpath')); 
             functionsPath = fullfile(currentPath, '..', 'Functions');
-            addpath(functionsPath);
+            
+            if exist(functionsPath, 'dir')
+                addpath(functionsPath);
+                fprintf('Added path: %s\n', functionsPath);
+            else
+                functionsPath = fullfile(pwd, 'Functions');
+                if exist(functionsPath, 'dir')
+                    addpath(functionsPath);
+                    fprintf('Added path: %s\n', functionsPath);
+                else
+                    warning('Functions folder not found!');
+                end
+            end
         end
 
         function onLoadImage(~, fig)
             gui_logic.setupPaths(); 
-            appData = fig.UserData;
+            appData = getappdata(fig, 'AppData');
             
-            [file, path] = uigetfile({'*.jpg;*.png;*.bmp;*.tif', 'Images'});
-            if isequal(file, 0), return; end
+            [file, path] = uigetfile({'*.jpg;*.png;*.bmp;*.tif', 'Image Files'});
+            if isequal(file, 0)
+                return; 
+            end
             
             try
                 img = imread(fullfile(path, file));
                 appData.OriginalImage = img;
                 appData.ProcessedImage = [];
-                fig.UserData = appData;
+                setappdata(fig, 'AppData', appData);
                 
-                imshow(img, 'Parent', appData.OriginalAxes);
-                title(appData.OriginalAxes, 'Original Image');
+                axes(appData.OriginalAxes);
+                imshow(img);
+                title('Original Image', 'FontSize', 12, 'FontWeight', 'bold');
+                
             catch
-                uialert(fig, 'Failed to load image.', 'Error');
+                errordlg('Failed to load image.', 'Error');
             end
         end
 
         function onCannyEdge(~, fig)
-            gui_logic.processImage(fig, @canny_edge);
+            gui_logic.processImage(fig, @canny_edge, 'Canny Edge');
         end
 
         function onDiffOfGaussians(~, fig)
-            gui_logic.processImage(fig, @dog_filter);
+            gui_logic.processImage(fig, @dog_filter, 'Diff of Gaussians');
         end
 
         function onAddSaltPepper(~, fig)
-            gui_logic.processImage(fig, @add_sp_noise);
+            gui_logic.processImage(fig, @add_sp_noise, 'Salt & Pepper');
         end
 
         function onAddGaussianNoise(~, fig)
-            gui_logic.processImage(fig, @add_gaussian_noise);
+            gui_logic.processImage(fig, @add_gaussian_noise, 'Gaussian Noise');
         end
 
         function onRemoveNoise(~, fig)
-            gui_logic.processImage(fig, @remove_noise);
+            gui_logic.processImage(fig, @remove_noise, 'Remove Noise');
         end
 
         function onHistEqualization(~, fig)
-            gui_logic.processImage(fig, @hist_eq);
+            gui_logic.processImage(fig, @hist_eq, 'Histogram Equalization');
         end
 
-        function processImage(fig, funcHandle)
+        function processImage(fig, funcHandle, operationName)
             gui_logic.setupPaths();
-            appData = fig.UserData;
+            appData = getappdata(fig, 'AppData');
             
             if isempty(appData.OriginalImage)
-                uialert(fig, 'Please Load an Image First!', 'Warning');
+                warndlg('Please Load an Image First!', 'Warning');
                 return;
             end
             
@@ -70,12 +86,14 @@ classdef gui_logic
                 outImg = funcHandle(inputImg);
                 
                 appData.ProcessedImage = outImg;
-                fig.UserData = appData;
+                setappdata(fig, 'AppData', appData);
                 
-                imshow(outImg, 'Parent', appData.ProcessedAxes);
-                title(appData.ProcessedAxes, 'Processed Image (Gray)');
+                axes(appData.ProcessedAxes);
+                imshow(outImg);
+                title(['Processed: ' operationName], 'FontSize', 12, 'FontWeight', 'bold');
+                
             catch ME
-                uialert(fig, ['Error: ' ME.message], 'Execution Error');
+                errordlg(['Error: ' ME.message], 'Execution Error');
             end
         end
     end
